@@ -1,3 +1,4 @@
+using System.Reflection;
 using Sales.Application.Boundaries;
 using Sales.Application.UseCases;
 using Sales.Application.UseCases.LogIn;
@@ -19,12 +20,14 @@ public static class DependencyContainer
 
     private static IServiceCollection AddHandlerServices(this IServiceCollection services)
     {
-        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-        var handlers = assemblies
-            .SelectMany(s => s.GetTypes())
+        var assemblies = Assembly
+            .GetExecutingAssembly()
+            .GetTypes()
             .Where(s => s is { IsAbstract: false, BaseType.IsGenericType: true } &&
-                        s.BaseType.GetGenericTypeDefinition() == typeof(Handler<>)).ToList();
-        handlers.ForEach(handler => services.AddScoped(handler));
+                        s.BaseType.GetGenericTypeDefinition() == typeof(Handler<>))
+            .ToList();
+
+        assemblies.ForEach(handler => services.AddScoped(handler));
 
         return services;
     }
